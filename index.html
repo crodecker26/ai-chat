@@ -1,18 +1,15 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>AI Partner Chat – Free AI Companion</title>
+  <meta name="description" content="Talk to an AI life partner for emotional support and companionship.">
+  <meta name="robots" content="index, follow">
+</head>
 <body>
-  <h2>AI Partner</h2>
-  <textarea id="msg"></textarea><br>
-  <button onclick="send()">Send</button>
-  <p id="reply">Waiting for reply...</p>
+  <h1>AI Partner Chat</h1>
+  <p>Your personal AI life companion.</p>
 
-<script>
-function send() {
-  fetch("PASTE_APPS_SCRIPT_URL_HERE", {
-    method: "POST",
-    body: JSON.stringify({ message: document.getElementById("msg").value })
-  });
-}
-</script>
+  <a href="STRIPE_CHECKOUT_LINK">Subscribe & Chat</a>
 </body>
 </html>
+
