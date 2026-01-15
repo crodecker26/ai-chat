@@ -1,1 +1,10 @@
+<input id="msg" placeholder="Type message..." />
+<button onclick="send()">Send</button>
+<div id="reply"></div>
 
+<script>
+function send() {
+  fetch("ZAPIER_WEBHOOK_URL", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
