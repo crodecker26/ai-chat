@@ -1,15 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>AI Partner Chat – Free AI Companion</title>
-  <meta name="description" content="Talk to an AI life partner for emotional support and companionship.">
-  <meta name="robots" content="index, follow">
+  <title>AI Partner Chat</title>
+  <meta charset="UTF-8" />
 </head>
 <body>
-  <h1>AI Partner Chat</h1>
-  <p>Your personal AI life companion.</p>
+  <h2>AI Partner Chat (Free Test)</h2>
 
-  <a href="STRIPE_CHECKOUT_LINK">Subscribe & Chat</a>
+  <div id="chat" style="border:1px solid #ccc;height:300px;overflow:auto;padding:10px;"></div>
+
+  <textarea id="msg" placeholder="Type your message..." style="width:100%;height:60px;"></textarea>
+  <button onclick="sendMessage()" style="width:100%;padding:10px;">Send</button>
+
+  <script>
+    function add(text, cls) {
+      const d = document.createElement("div");
+      d.className = cls;
+      d.innerText = text;
+      document.getElementById("chat").appendChild(d);
+    }
+
+    function sendMessage() {
+      const msg = document.getElementById("msg").value;
+      if (!msg) return;
+      add("You: " + msg);
+      add("AI: (Zapier not connected yet)");
+      document.getElementById("msg").value = "";
+    }
+  </script>
 </body>
 </html>
-
