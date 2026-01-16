@@ -1,8 +1,5 @@
-fetch("https://script.google.com/macros/s/AKfycbzjjj3Q2ZtFhg2ofJDte6RO6rNASXVsvmcGHuVVn0TXZ-3DIYTp1xWqE85RVyitPk-R/exec", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    user_id: "user@email.com",
-    user_message: msg
-  })
-});
+if (!userSubscribed) {
+  showSubscribeScreen();
+} else {
+  showChat();
+}
