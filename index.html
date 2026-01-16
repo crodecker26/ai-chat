@@ -58,23 +58,18 @@ function sendMessage() {
   addMessage("You: " + msg, "user");
   msgBox.value = "";
 
-  // Send message to Apps Script
-  fetch(https://script.google.com/macros/s/AKfycbx_Dj2-BxH769eUn2vxZRXjI_LC44uFMqPINKdN2FQXvOOTE7rP1OQxGSq3twfOyvv-/exec, {
+  // Send to Apps Script
+  fetch(APPS_SCRIPT_URL, {
     method: "POST",
+    mode: "no-cors", // allows sending without CORS issues
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      user_id: "test_user",      // You can replace with dynamic user IDs later
+      user_id: "test_user", // can replace later with dynamic user ID
       user_message: msg
     })
-  })
-  .then(response => response.text())
-  .then(data => {
-    addMessage("AI: (Message saved, Zapier will respond)", "ai");
-  })
-  .catch(err => {
-    addMessage("AI: Error sending message", "ai");
-    console.error(err);
   });
+
+  addMessage("AI: (Message sent, will appear in Sheets)", "ai");
 }
 </script>
 
