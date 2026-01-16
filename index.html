@@ -19,15 +19,8 @@
     }
     .user { color: blue; margin: 5px 0; }
     .ai { color: green; margin: 5px 0; }
-    textarea {
-      width: 100%;
-      height: 60px;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-    }
+    textarea { width: 100%; height: 60px; }
+    button { width: 100%; padding: 10px; margin-top: 5px; }
   </style>
 </head>
 <body>
@@ -36,12 +29,14 @@
 
 <div id="chat"></div>
 
-<textarea id="msg" placeholder="Type your message..."></textarea>
-<button onclick="sendMessage()">Send</button>
+<form id="chatForm" target="hidden_iframe" method="POST" action="https://script.google.com/macros/s/AKfycbzrwZK4-fff25HxYyNm77jvzHtKgJi0ewTjYx4iIAwrpo5yD5iDIp3s2A8lafwnzjSn/exec">
+  <textarea name="data" id="msg" placeholder='{"user_id":"test_user","user_message":""}'></textarea>
+  <button type="submit" onclick="prepareMessage()">Send</button>
+</form>
+
+<iframe name="hidden_iframe" style="display:none;"></iframe>
 
 <script>
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwm6BvSreRn-3gBPTO_WRJgy7FIk0c01RyAt9Lo52inr-7ey06zVr-IoDFHo7_rJrd5/exec";
-
 function addMessage(text, sender) {
   const div = document.createElement("div");
   div.className = sender;
@@ -50,26 +45,25 @@ function addMessage(text, sender) {
   document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
 }
 
-function sendMessage() {
+function prepareMessage() {
   const msgBox = document.getElementById("msg");
-  const msg = msgBox.value.trim();
-  if (!msg) return;
+  const message = msgBox.value.trim();
+  if (!message) return false; // prevent sending empty
 
-  addMessage("You: " + msg, "user");
-  msgBox.value = "";
+  // Show in chat immediately
+  addMessage("You: " + message, "user");
+  addMessage("AI: (Message sent, Zapier will respond)", "ai");
 
-  // Send to Apps Script
-  fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    mode: "no-cors", // allows sending without CORS issues
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      user_id: "test_user", // can replace later with dynamic user ID
-      user_message: msg
-    })
+  // Put JSON string into textarea for form POST
+  msgBox.value = JSON.stringify({
+    user_id: "test_user",
+    user_message: message
   });
 
-  addMessage("AI: (Message sent, will appear in Sheets)", "ai");
+  // Clear textarea after short delay so user sees typing area ready
+  setTimeout(() => { msgBox.value = ""; }, 100);
+
+  return true;
 }
 </script>
 
