@@ -4,23 +4,23 @@
 <meta charset="UTF-8">
 <title>AI Partner Chat</title>
 <style>
-  body { font-family: Arial, sans-serif; background: #f2f2f2; margin:0; display:flex; flex-direction:column; height:100vh;}
-  body.dark { background:#1e1e1e; color:#ddd; }
-  #chatContainer { flex:1; overflow-y:auto; padding:10px; display:flex; flex-direction:column; }
-  .message { max-width:70%; margin:5px 0; padding:10px 15px; border-radius:20px; box-shadow:0 2px 5px rgba(0,0,0,0.2); display:flex; align-items:center;}
-  .user { background:#0078ff; color:white; margin-left:auto; flex-direction:row-reverse; }
-  .partner { background:#e0e0e0; color:black; margin-right:auto; }
-  .profile-pic { width:35px; height:35px; border-radius:50%; margin:0 8px; }
-  #typingIndicator { display:none; font-style:italic; margin:5px 0; color:#555; }
-  body.dark #typingIndicator { color:#aaa; }
-  #inputContainer { display:flex; padding:10px; background:#fff; border-top:1px solid #ccc; }
-  body.dark #inputContainer { background:#2c2c2c; border-top:1px solid #444; }
-  #msg { flex:1; padding:10px; border-radius:10px; border:1px solid #ccc; resize:none; }
-  body.dark #msg { background:#3c3c3c; border:1px solid #555; color:#fff; }
-  button { margin-left:5px; padding:10px; border-radius:10px; border:none; cursor:pointer; }
-  #sendBtn { background:#0078ff; color:white; }
-  #clearBtn { background:#aaa; color:white; }
-  #darkModeBtn { background:#444; color:white; }
+body { font-family: Arial; margin:0; display:flex; flex-direction:column; height:100vh; background:#f2f2f2;}
+body.dark { background:#1e1e1e; color:#ddd; }
+#chatContainer { flex:1; overflow-y:auto; padding:10px; display:flex; flex-direction:column; }
+.message { max-width:70%; margin:5px 0; padding:10px 15px; border-radius:20px; box-shadow:0 2px 5px rgba(0,0,0,0.2); display:flex; align-items:center; }
+.user { background:#0078ff; color:white; margin-left:auto; flex-direction:row-reverse; }
+.partner { background:#e0e0e0; color:black; margin-right:auto; }
+.profile-pic { width:35px; height:35px; border-radius:50%; margin:0 8px; }
+#typingIndicator { display:none; font-style:italic; margin:5px 0; color:#555; }
+body.dark #typingIndicator { color:#aaa; }
+#inputContainer { display:flex; padding:10px; background:#fff; border-top:1px solid #ccc; }
+body.dark #inputContainer { background:#2c2c2c; border-top:1px solid #444; }
+#msg { flex:1; padding:10px; border-radius:10px; border:1px solid #ccc; resize:none; }
+body.dark #msg { background:#3c3c3c; border:1px solid #555; color:#fff; }
+button { margin-left:5px; padding:10px; border-radius:10px; border:none; cursor:pointer; }
+#sendBtn { background:#0078ff; color:white; }
+#clearBtn { background:#aaa; color:white; }
+#darkModeBtn { background:#444; color:white; }
 </style>
 </head>
 <body>
@@ -63,10 +63,9 @@ function addMessage(text, sender){
   chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-// ---- YOUR GROK API KEY HERE ----
-const GROK_KEY = "xai-pofp3Payi1X49mw0pqVSzw7tjO9tKlQIYSxAwUvXS4Vzy5XVbcRnsTmH0DGaoQahamdFRPYNQcGnTjl4";
+// Worker URL
+const WORKER_URL = "https://broken-poetry-bc28.calvin-rodecker.workers.dev/";
 
-// Send message directly to Grok API
 async function sendMessage(){
   const message = msgBox.value.trim();
   if(!message) return;
@@ -75,24 +74,18 @@ async function sendMessage(){
   showTyping();
 
   try{
-    const response = await fetch("https://api.x.ai/v1/grok/generate",{
+    const response = await fetch(WORKER_URL,{
       method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "Authorization":"Bearer "+GROK_KEY
-      },
+      headers:{"Content-Type":"application/json"},
       body: JSON.stringify({
-        instructions:"You are a flirty, engaging AI partner. Respond short, relevant, and keep the user engaged.",
-        input:"User: "+message+"\nMemory: "+(localStorage.getItem("chatMemory")||"")
+        message: message,
+        memory: localStorage.getItem("chatMemory") || ""
       })
     });
-
     const data = await response.json();
     hideTyping();
-    const reply = data.output || "Partner didn't respond.";
-    addMessage(reply,"partner");
-    // Save memory locally
-    localStorage.setItem("chatMemory",(localStorage.getItem("chatMemory")||"")+" "+message+" "+reply);
+    addMessage(data.ai_reply || "Partner didn't respond","partner");
+    localStorage.setItem("chatMemory",(localStorage.getItem("chatMemory")||"")+" "+message+" "+(data.ai_reply||""));
   }catch(err){
     hideTyping();
     addMessage("Error contacting partner: "+err.message,"partner");
