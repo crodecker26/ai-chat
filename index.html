@@ -3,108 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <title>AI Partner</title>
-  <style>
-    body {
-      background:#0f172a;
-      font-family: system-ui;
-      margin:0;
-      display:flex;
-      flex-direction:column;
-      height:100vh;
-    }
-
-    #chat {
-      flex:1;
-      padding:20px;
-      overflow-y:auto;
-    }
-
-    .msg {
-      max-width:70%;
-      padding:12px 16px;
-      margin:10px;
-      border-radius:18px;
-      box-shadow:0 6px 20px rgba(0,0,0,.3);
-      animation: pop .2s ease;
-    }
-
-    .user {
-      margin-left:auto;
-      background:#2563eb;
-      color:white;
-    }
-
-    .ai {
-      background:#1e293b;
-      color:#e5e7eb;
-    }
-
-    @keyframes pop {
-      from { transform:scale(.9); opacity:0 }
-      to { transform:scale(1); opacity:1 }
-    }
-
-    #input {
-      display:flex;
-      padding:12px;
-      background:#020617;
-    }
-
-    input {
-      flex:1;
-      padding:12px;
-      border-radius:12px;
-      border:none;
-      outline:none;
-    }
-
-    button {
-      margin-left:10px;
-      padding:12px 18px;
-      border-radius:12px;
-      border:none;
-      background:#22c55e;
-      color:black;
-      cursor:pointer;
-    }
-  </style>
 </head>
 <body>
 
 <div id="chat"></div>
 
-<div id="input">
-  <input id="text" placeholder="Type a message…" />
-  <button onclick="send()">Send</button>
-</div>
+<input id="msg" placeholder="Say something…" />
+<button onclick="send()">Send</button>
 
 <script>
 const WORKER_URL = "https://broken-poetry-bc28.calvin-rodecker.workers.dev/";
 
-function add(text, cls) {
-  const d = document.createElement("div");
-  d.className = "msg " + cls;
-  d.textContent = text;
-  chat.appendChild(d);
-  chat.scrollTop = chat.scrollHeight;
-}
-
 async function send() {
-  const input = document.getElementById("text");
+  const input = document.getElementById("msg");
   const message = input.value.trim();
   if (!message) return;
 
-  add(message, "user");
+  document.getElementById("chat").innerHTML += `<p><b>You:</b> ${message}</p>`;
   input.value = "";
 
-  const res = await fetch(WORKER_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message })
-  });
+  try {
+    const res = await fetch(WORKER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message })
+    });
 
-  const data = await res.json();
-  add(data.ai_reply, "ai");
+    const data = await res.json();
+    document.getElementById("chat").innerHTML +=
+      `<p><b>Partner:</b> ${data.ai_reply}</p>`;
+  } catch (e) {
+    document.getElementById("chat").innerHTML +=
+      `<p><b>Error:</b> Failed to contact partner.</p>`;
+  }
 }
 </script>
 
