@@ -4,28 +4,44 @@
 <meta charset="UTF-8">
 <title>AI Partner Chat</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    max-width: 500px;
-    margin: 40px auto;
-    padding: 10px;
-    transition: background 0.3s, color 0.3s;
-  }
-  body.light { background: #f5f5f5; color: #222; }
-  body.dark { background: #222; color: #f5f5f5; }
+body {
+  font-family: Arial, sans-serif;
+  max-width: 500px;
+  margin: 20px auto;
+  padding: 10px;
+  transition: background 0.3s, color 0.3s;
+}
+body.light { background: #f5f5f5; color: #222; }
+body.dark { background: #222; color: #f5f5f5; }
 
-  #chat { border: 1px solid #ccc; height: 300px; overflow-y: auto; padding: 10px; margin-bottom: 10px; border-radius: 10px; }
-  .user { color: blue; margin: 5px 0; }
-  .partner { color: green; margin: 5px 0; }
-  .typing { font-style: italic; color: gray; }
-  .message { margin: 5px 0; padding: 5px 10px; border-radius: 8px; display: inline-block; max-width: 80%; }
-  .user .message { background: #d0e7ff; }
-  .partner .message { background: #d0ffd6; }
+#chat { 
+  border: 1px solid #ccc; 
+  height: 400px; 
+  overflow-y: auto; 
+  padding: 10px; 
+  border-radius: 12px;
+  display: flex; 
+  flex-direction: column;
+  gap: 8px;
+  background: #fff;
+}
+body.dark #chat { background: #333; }
 
-  textarea { width: 100%; height: 60px; border-radius: 5px; }
-  button { width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; }
+.message-wrapper { display: flex; flex-direction: column; }
+.user .bubble { background: linear-gradient(120deg,#a0c4ff,#70bfff); align-self: flex-end; color:#000; }
+.partner .bubble { background: linear-gradient(120deg,#b2f2bb,#6ee7b7); align-self: flex-start; color:#000; }
 
-  .controls { display: flex; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 5px; }
+.bubble { padding: 8px 12px; border-radius: 18px; max-width: 75%; position: relative; transition: all 0.2s; }
+.bubble:hover { opacity: 0.9; }
+
+.timestamp { font-size: 10px; color: gray; margin-top: 2px; text-align: right; }
+
+.controls { display: flex; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 5px; }
+
+textarea { width: 100%; height: 60px; border-radius: 5px; padding: 8px; font-size: 14px; }
+button { border-radius: 5px; padding: 10px; margin-top: 5px; width: 100%; font-weight: bold; cursor: pointer; }
+.copy-btn { font-size: 10px; margin-left: 5px; cursor: pointer; }
+.typing { font-style: italic; color: gray; margin-left: 5px; }
 </style>
 </head>
 <body class="light">
@@ -41,30 +57,51 @@
 <div id="chat"></div>
 
 <textarea id="messageInput" placeholder="Type your message..."></textarea>
-<button onclick="sendMessage()">Send</button>
+<button id="sendBtn">Send</button>
 
-<audio id="typeSound" src="type-sound.mp3" preload="auto"></audio>
+<audio id="typeSound" src="https://www.soundjay.com/button/sounds/button-16.mp3" preload="auto"></audio>
 
 <script>
 const chatDiv = document.getElementById("chat");
+const messageInput = document.getElementById("messageInput");
+const sendBtn = document.getElementById("sendBtn");
 const soundToggle = document.getElementById("soundToggle");
 const typeSound = document.getElementById("typeSound");
 
-// Assign random user ID
-const userId = "user_" + Math.floor(Math.random() * 1000000);
-
-// Load memory from localStorage
+// Random user ID for memory
+const userId = "user_" + Math.floor(Math.random()*1000000);
 let memory = localStorage.getItem(userId) || "";
 function saveMemory() { localStorage.setItem(userId, memory); }
 function summarizeMemory(mem) { return mem.slice(-1000); } // last 1000 chars
 
+function formatTimestamp() {
+  const d = new Date();
+  return d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+}
+
 function addMessage(text, sender) {
-  const div = document.createElement("div");
-  div.className = sender;
-  const msgSpan = document.createElement("span");
-  msgSpan.textContent = text;
-  div.appendChild(msgSpan);
-  chatDiv.appendChild(div);
+  const wrapper = document.createElement("div");
+  wrapper.className = sender + " message-wrapper";
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.textContent = text;
+
+  const time = document.createElement("div");
+  time.className = "timestamp";
+  time.textContent = formatTimestamp();
+
+  if(sender==="partner"){
+    const copyBtn = document.createElement("span");
+    copyBtn.textContent = "📋";
+    copyBtn.className = "copy-btn";
+    copyBtn.onclick = () => navigator.clipboard.writeText(text);
+    bubble.appendChild(copyBtn);
+  }
+
+  wrapper.appendChild(bubble);
+  wrapper.appendChild(time);
+  chatDiv.appendChild(wrapper);
   chatDiv.scrollTop = chatDiv.scrollHeight;
 }
 
@@ -76,69 +113,73 @@ function showTypingIndicator() {
   chatDiv.appendChild(div);
   chatDiv.scrollTop = chatDiv.scrollHeight;
 }
-
 function hideTypingIndicator() {
   const indicator = document.getElementById("typingIndicator");
-  if (indicator) indicator.remove();
+  if(indicator) indicator.remove();
 }
 
 async function sendMessage() {
-  const input = document.getElementById("messageInput");
-  const msg = input.value.trim();
-  if (!msg) return;
-  input.value = "";
-
+  const msg = messageInput.value.trim();
+  if(!msg) return;
+  messageInput.value = "";
   addMessage("You: " + msg, "user");
   memory += `User: ${msg}\n`;
   saveMemory();
   showTypingIndicator();
 
   try {
-    const response = await fetch("https://script.google.com/macros/s/AKfycbykU-IpRnr7_ZkU19QdliBelXFsnM_0wTlYT031_JUI1jHh5U1Zm7BbgM66mmytSX8g/exec", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_id: userId,
-        message: msg,
-        memory: summarizeMemory(memory),
-        timestamp: new Date().toISOString()
-      })
-    });
+    const formData = new FormData();
+    formData.append("user_id", userId);
+    formData.append("message", msg);
+    formData.append("memory", summarizeMemory(memory));
+    formData.append("timestamp", new Date().toISOString());
 
-    if (!response.ok) throw new Error("Network response not OK: " + response.status);
+    const response = await fetch("https://hooks.zapier.com/hooks/catch/25106599/uqb4hsa/", {
+      method: "POST",
+      body: formData
+    });
 
     const data = await response.json();
     hideTypingIndicator();
 
-    if (!data.ai_reply) throw new Error("No ai_reply returned from server");
+    if(!data.ai_reply) throw new Error("No ai_reply returned");
 
     const partnerText = data.ai_reply;
     memory += `Partner: ${partnerText}\n`;
     saveMemory();
 
-    // Animate partner typing letter by letter
+    // Animate letter-by-letter typing
     let index = 0;
-    const partnerDiv = document.createElement("div");
-    partnerDiv.className = "partner message";
-    chatDiv.appendChild(partnerDiv);
+    const wrapper = document.createElement("div");
+    wrapper.className = "partner message-wrapper";
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    wrapper.appendChild(bubble);
+    chatDiv.appendChild(wrapper);
 
     function typeLetter() {
-      if (index < partnerText.length) {
-        partnerDiv.textContent = partnerText.slice(0, index + 1);
+      if(index < partnerText.length){
+        bubble.textContent = partnerText.slice(0,index+1);
         chatDiv.scrollTop = chatDiv.scrollHeight;
-        if (soundToggle.checked) typeSound.play();
+        if(soundToggle.checked) typeSound.play();
         index++;
         setTimeout(typeLetter, 50);
       }
     }
     typeLetter();
 
-  } catch (e) {
+  } catch(e) {
     hideTypingIndicator();
     addMessage("⚠️ Error contacting Partner: " + e.message, "partner");
-    console.error("sendMessage error:", e);
+    console.error(e);
   }
 }
+
+// Buttons
+sendBtn.onclick = sendMessage;
+messageInput.addEventListener("keydown", e => {
+  if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+});
 
 // Light/Dark toggle
 document.getElementById("toggleTheme").onclick = () => {
@@ -146,7 +187,7 @@ document.getElementById("toggleTheme").onclick = () => {
   document.body.classList.toggle("dark");
 };
 
-// Clear chat and memory
+// Clear chat
 document.getElementById("clearChat").onclick = () => {
   chatDiv.innerHTML = "";
   memory = "";
