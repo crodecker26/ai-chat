@@ -1,108 +1,111 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>AI Partner Chat</title>
-<style>
-body { font-family: Arial; margin:0; display:flex; flex-direction:column; height:100vh; background:#f2f2f2;}
-body.dark { background:#1e1e1e; color:#ddd; }
-#chatContainer { flex:1; overflow-y:auto; padding:10px; display:flex; flex-direction:column; }
-.message { max-width:70%; margin:5px 0; padding:10px 15px; border-radius:20px; box-shadow:0 2px 5px rgba(0,0,0,0.2); display:flex; align-items:center; }
-.user { background:#0078ff; color:white; margin-left:auto; flex-direction:row-reverse; }
-.partner { background:#e0e0e0; color:black; margin-right:auto; }
-.profile-pic { width:35px; height:35px; border-radius:50%; margin:0 8px; }
-#typingIndicator { display:none; font-style:italic; margin:5px 0; color:#555; }
-body.dark #typingIndicator { color:#aaa; }
-#inputContainer { display:flex; padding:10px; background:#fff; border-top:1px solid #ccc; }
-body.dark #inputContainer { background:#2c2c2c; border-top:1px solid #444; }
-#msg { flex:1; padding:10px; border-radius:10px; border:1px solid #ccc; resize:none; }
-body.dark #msg { background:#3c3c3c; border:1px solid #555; color:#fff; }
-button { margin-left:5px; padding:10px; border-radius:10px; border:none; cursor:pointer; }
-#sendBtn { background:#0078ff; color:white; }
-#clearBtn { background:#aaa; color:white; }
-#darkModeBtn { background:#444; color:white; }
-</style>
+  <meta charset="UTF-8">
+  <title>AI Partner</title>
+  <style>
+    body {
+      background:#0f172a;
+      font-family: system-ui;
+      margin:0;
+      display:flex;
+      flex-direction:column;
+      height:100vh;
+    }
+
+    #chat {
+      flex:1;
+      padding:20px;
+      overflow-y:auto;
+    }
+
+    .msg {
+      max-width:70%;
+      padding:12px 16px;
+      margin:10px;
+      border-radius:18px;
+      box-shadow:0 6px 20px rgba(0,0,0,.3);
+      animation: pop .2s ease;
+    }
+
+    .user {
+      margin-left:auto;
+      background:#2563eb;
+      color:white;
+    }
+
+    .ai {
+      background:#1e293b;
+      color:#e5e7eb;
+    }
+
+    @keyframes pop {
+      from { transform:scale(.9); opacity:0 }
+      to { transform:scale(1); opacity:1 }
+    }
+
+    #input {
+      display:flex;
+      padding:12px;
+      background:#020617;
+    }
+
+    input {
+      flex:1;
+      padding:12px;
+      border-radius:12px;
+      border:none;
+      outline:none;
+    }
+
+    button {
+      margin-left:10px;
+      padding:12px 18px;
+      border-radius:12px;
+      border:none;
+      background:#22c55e;
+      color:black;
+      cursor:pointer;
+    }
+  </style>
 </head>
 <body>
 
-<div id="chatContainer"></div>
-<div id="typingIndicator">Your partner is typing<span id="dots">...</span></div>
+<div id="chat"></div>
 
-<div id="inputContainer">
-  <textarea id="msg" placeholder="Type your message..."></textarea>
-  <button id="sendBtn">Send</button>
-  <button id="clearBtn">Clear Chat</button>
-  <button id="darkModeBtn">Toggle Dark Mode</button>
+<div id="input">
+  <input id="text" placeholder="Type a message…" />
+  <button onclick="send()">Send</button>
 </div>
 
 <script>
-const chatContainer = document.getElementById("chatContainer");
-const msgBox = document.getElementById("msg");
-const typingIndicator = document.getElementById("typingIndicator");
-const dots = document.getElementById("dots");
-
-let dotInterval;
-function showTyping() {
-  typingIndicator.style.display = "block";
-  let count = 0;
-  dotInterval = setInterval(()=>{ dots.textContent = '.'.repeat(count % 4); count++; }, 500);
-}
-function hideTyping(){ typingIndicator.style.display="none"; clearInterval(dotInterval); }
-
-function addMessage(text, sender){
-  const div = document.createElement("div");
-  div.className="message "+sender;
-  const img = document.createElement("img");
-  img.className="profile-pic";
-  img.src = sender==="user" ? "https://i.pravatar.cc/35?img=5" : "https://i.pravatar.cc/35?img=12";
-  const span = document.createElement("span");
-  span.textContent = text;
-  div.appendChild(img);
-  div.appendChild(span);
-  chatContainer.appendChild(div);
-  chatContainer.scrollTop = chatContainer.scrollHeight;
-}
-
-// Worker URL
 const WORKER_URL = "https://broken-poetry-bc28.calvin-rodecker.workers.dev/";
 
-async function sendMessage(){
-  const message = msgBox.value.trim();
-  if(!message) return;
-  addMessage(message,"user");
-  msgBox.value="";
-  showTyping();
-
-  try{
-    const response = await fetch(WORKER_URL,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({
-        message: message,
-        memory: localStorage.getItem("chatMemory") || ""
-      })
-    });
-    const data = await response.json();
-    hideTyping();
-    addMessage(data.ai_reply || "Partner didn't respond","partner");
-    localStorage.setItem("chatMemory",(localStorage.getItem("chatMemory")||"")+" "+message+" "+(data.ai_reply||""));
-  }catch(err){
-    hideTyping();
-    addMessage("Error contacting partner: "+err.message,"partner");
-  }
+function add(text, cls) {
+  const d = document.createElement("div");
+  d.className = "msg " + cls;
+  d.textContent = text;
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
 }
 
-document.getElementById("sendBtn").addEventListener("click",sendMessage);
-msgBox.addEventListener("keydown",e=>{
-  if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendMessage(); }
-});
-document.getElementById("clearBtn").addEventListener("click",()=>{
-  chatContainer.innerHTML="";
-  localStorage.removeItem("chatMemory");
-});
-document.getElementById("darkModeBtn").addEventListener("click",()=>{
-  document.body.classList.toggle("dark");
-});
+async function send() {
+  const input = document.getElementById("text");
+  const message = input.value.trim();
+  if (!message) return;
+
+  add(message, "user");
+  input.value = "";
+
+  const res = await fetch(WORKER_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message })
+  });
+
+  const data = await res.json();
+  add(data.ai_reply, "ai");
+}
 </script>
 
 </body>
