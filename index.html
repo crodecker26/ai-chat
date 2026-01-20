@@ -59,7 +59,7 @@ button { border-radius: 5px; padding: 10px; margin-top: 5px; width: 100%; font-w
 <textarea id="messageInput" placeholder="Type your message..."></textarea>
 <button id="sendBtn">Send</button>
 
-<audio id="typeSound" src="https://www.soundjay.com/button/sounds/button-16.mp3" preload="auto"></audio>
+<audio id="typeSound" src="https://raw.githubusercontent.com/crodecker26/ai-chat-assets/main/button-16.mp3" preload="auto"></audio>
 
 <script>
 const chatDiv = document.getElementById("chat");
@@ -128,6 +128,7 @@ async function sendMessage() {
   showTypingIndicator();
 
   try {
+    // Send as FormData to Zapier Catch Hook
     const formData = new FormData();
     formData.append("user_id", userId);
     formData.append("message", msg);
@@ -139,10 +140,15 @@ async function sendMessage() {
       body: formData
     });
 
-    const data = await response.json();
+    const text = await response.text();
+    const data = JSON.parse(text); // Safely parse even if response is text/html
+
     hideTypingIndicator();
 
-    if(!data.ai_reply) throw new Error("No ai_reply returned");
+    if(!data || !data.ai_reply){
+      addMessage("⚠️ Partner did not respond. Try again.", "partner");
+      return;
+    }
 
     const partnerText = data.ai_reply;
     memory += `Partner: ${partnerText}\n`;
