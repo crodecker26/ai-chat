@@ -4,82 +4,120 @@
 <meta charset="UTF-8">
 <title>AI Partner Chat</title>
 <style>
-body {
-  font-family: Arial, sans-serif;
-  max-width: 500px;
-  margin: 20px auto;
-  padding: 10px;
-  background-color: #f0f0f0;
-  transition: background-color 0.3s, color 0.3s;
-}
-#chat {
-  height: 400px;
-  overflow-y: auto;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-}
-.bubble {
-  max-width: 80%;
-  padding: 10px 15px;
-  border-radius: 20px;
-  margin: 5px 0;
-  display: flex;
-  align-items: flex-end;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.2);
-  animation: pop 0.2s ease-out;
-}
-.user {
-  background-color: #007bff;
-  color: #fff;
-  align-self: flex-end;
-  border-bottom-right-radius: 2px;
-}
-.partner {
-  background-color: #28a745;
-  color: #fff;
-  align-self: flex-start;
-  border-bottom-left-radius: 2px;
-}
-.profile-pic {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  margin-right: 10px;
-}
-#controls {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-#controls button { width: 48%; padding: 8px; border-radius: 5px; cursor: pointer; }
-textarea {
-  width: 100%;
-  height: 60px;
-  border-radius: 5px;
-  padding: 5px;
-}
-#sendBtn { width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; cursor: pointer; }
-.dark-mode { background-color: #121212; color: #f0f0f0; }
-.dark-mode .bubble.user { background-color: #0d6efd; }
-.dark-mode .bubble.partner { background-color: #198754; }
-.typing {
-  font-style: italic;
-  color: #555;
-  display: flex;
-  align-items: center;
-}
-.dot {
-  width: 6px; height: 6px;
-  background-color: #555;
-  border-radius: 50%;
-  margin: 0 2px;
-  animation: bounce 1s infinite;
-}
-.dot:nth-child(2) { animation-delay: 0.2s; }
-.dot:nth-child(3) { animation-delay: 0.4s; }
-@keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-8px); } }
-@keyframes pop { 0% { transform: scale(0.5); opacity:0 } 100% { transform: scale(1); opacity:1 } }
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 500px;
+    margin: 20px auto;
+    padding: 10px;
+    background-color: #f0f0f0;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  body.dark {
+    background-color: #1e1e1e;
+    color: #f0f0f0;
+  }
+
+  #chat {
+    border-radius: 10px;
+    background: #fff;
+    height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  body.dark #chat {
+    background: #2c2c2c;
+  }
+
+  .message {
+    display: flex;
+    max-width: 80%;
+    padding: 10px;
+    border-radius: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    word-wrap: break-word;
+  }
+
+  .user {
+    background: #007bff;
+    color: #fff;
+    margin-left: auto;
+    border-bottom-right-radius: 0;
+  }
+
+  .partner {
+    background: #e4e6eb;
+    color: #000;
+    margin-right: auto;
+    border-bottom-left-radius: 0;
+  }
+
+  body.dark .partner {
+    background: #3a3a3a;
+    color: #fff;
+  }
+
+  .profile-pic {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    margin-right: 8px;
+  }
+
+  #inputArea {
+    display: flex;
+    gap: 5px;
+  }
+
+  textarea {
+    flex: 1;
+    height: 60px;
+    border-radius: 10px;
+    padding: 5px;
+    resize: none;
+  }
+
+  button {
+    padding: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    border: none;
+    background-color: #007bff;
+    color: #fff;
+  }
+
+  .typing {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    background: #666;
+    border-radius: 50%;
+    animation: bounce 0.6s infinite alternate;
+  }
+
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    to { transform: translateY(-5px); }
+  }
+
+  #controls {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+  }
 </style>
 </head>
 <body>
@@ -87,106 +125,132 @@ textarea {
 <h2>AI Partner Chat</h2>
 
 <div id="controls">
+  <button id="clearBtn">Clear Chat</button>
   <button id="toggleTheme">Toggle Light/Dark</button>
-  <button id="clearChat">Clear Chat</button>
+  <button id="toggleSound">Toggle Sound</button>
 </div>
 
 <div id="chat"></div>
 
-<textarea id="msg" placeholder="Type your message..."></textarea>
-<button id="sendBtn">Send</button>
+<div id="inputArea">
+  <textarea id="msg" placeholder="Type your message..."></textarea>
+  <button id="sendBtn">Send</button>
+</div>
+
+<audio id="sendSound" src="https://www.soundjay.com/button/sounds/button-16.mp3"></audio>
 
 <script>
-const chatDiv = document.getElementById('chat');
+const chat = document.getElementById('chat');
 const msgBox = document.getElementById('msg');
 const sendBtn = document.getElementById('sendBtn');
+const clearBtn = document.getElementById('clearBtn');
+const toggleThemeBtn = document.getElementById('toggleTheme');
+const toggleSoundBtn = document.getElementById('toggleSound');
+const sendSound = document.getElementById('sendSound');
 
-const userId = localStorage.getItem('user_id') || crypto.randomUUID();
-localStorage.setItem('user_id', userId);
+let soundEnabled = true;
 
-// Load memory
-let memory = JSON.parse(localStorage.getItem('memory')) || [];
+// Generate a random user id per session
+const userId = 'user_' + Math.random().toString(36).substr(2, 9);
+
+// Simple in-memory conversation memory
+let memory = [];
 
 function addMessage(text, sender) {
-  const bubble = document.createElement('div');
-  bubble.className = 'bubble ' + sender;
+  const div = document.createElement('div');
+  div.className = `message ${sender}`;
 
   const pic = document.createElement('img');
   pic.className = 'profile-pic';
-  pic.src = sender === 'user' ? 'https://i.imgur.com/7kR0o6v.png' : 'https://i.imgur.com/9pYwXJz.png';
-  
-  bubble.appendChild(pic);
+  pic.src = sender === 'user' 
+            ? 'https://i.pravatar.cc/36?img=3' 
+            : 'https://i.pravatar.cc/36?img=5';
+
+  div.appendChild(pic);
   const span = document.createElement('span');
   span.textContent = text;
-  bubble.appendChild(span);
+  div.appendChild(span);
 
-  chatDiv.appendChild(bubble);
-  chatDiv.scrollTop = chatDiv.scrollHeight;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
 }
 
-function saveMemory(userMessage, partnerMessage) {
-  memory.push(`User: ${userMessage}`);
-  memory.push(`Partner: ${partnerMessage}`);
-  if(memory.length > 20) memory = memory.slice(memory.length - 20);
-  localStorage.setItem('memory', JSON.stringify(memory));
+function showTyping() {
+  const div = document.createElement('div');
+  div.className = 'message partner typing';
+  div.id = 'typingIndicator';
+  div.innerHTML = '<img class="profile-pic" src="https://i.pravatar.cc/36?img=5"><span><div class="dot"></div><div class="dot"></div><div class="dot"></div></span>';
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function hideTyping() {
+  const indicator = document.getElementById('typingIndicator');
+  if (indicator) indicator.remove();
 }
 
 async function sendMessage() {
   const message = msgBox.value.trim();
-  if(!message) return;
+  if (!message) return;
 
   addMessage(message, 'user');
+  memory.push({ user: message }); // store user message
+  if (soundEnabled) sendSound.play();
   msgBox.value = '';
 
-  // Typing indicator
-  const typingDiv = document.createElement('div');
-  typingDiv.className = 'typing';
-  typingDiv.innerHTML = `
-    <span class="profile-pic"><img src="https://i.imgur.com/9pYwXJz.png" width="30"/></span>
-    <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-    Partner is typing...
-  `;
-  chatDiv.appendChild(typingDiv);
-  chatDiv.scrollTop = chatDiv.scrollHeight;
-
-  const memorySummary = memory.join('\n');
+  showTyping();
 
   try {
-    const response = await fetch("https://broken-poetry-bc28.calvin-rodecker.workers.dev/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_id: userId,
+    const response = await fetch('https://broken-poetry-bc28.calvin-rodecker.workers.dev/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        user_id: userId, 
         message: message,
-        memory_summary: memorySummary
+        memory_summary: memory.map(m => m.user + (m.partner||'')).join('\n')
       })
     });
 
-    if(!response.ok) throw new Error('Network response not OK');
-
     const data = await response.json();
-    chatDiv.removeChild(typingDiv);
-    addMessage(data.ai_reply, 'partner');
-    saveMemory(message, data.ai_reply);
+    hideTyping();
 
-  } catch(err) {
-    chatDiv.removeChild(typingDiv);
-    addMessage("Error contacting Partner: " + err.message, 'partner');
+    if (data.ai_reply) {
+      addMessage(data.ai_reply, 'partner');
+      memory.push({ partner: data.ai_reply }); // store AI reply
+      if (soundEnabled) sendSound.play();
+    } else {
+      addMessage('Error contacting Partner', 'partner');
+    }
+
+  } catch (err) {
+    hideTyping();
+    addMessage('Error contacting Partner: ' + err.message, 'partner');
   }
 }
 
-sendBtn.onclick = sendMessage;
-msgBox.addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+// Event listeners
+sendBtn.addEventListener('click', sendMessage);
+msgBox.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
 
-document.getElementById('clearChat').onclick = () => {
-  chatDiv.innerHTML = '';
+clearBtn.addEventListener('click', () => {
+  chat.innerHTML = '';
   memory = [];
-  localStorage.setItem('memory', JSON.stringify(memory));
-};
+});
 
-document.getElementById('toggleTheme').onclick = () => {
-  document.body.classList.toggle('dark-mode');
-};
+toggleThemeBtn.addEventListener('click', () => {
+  document.body.classList.toggle('dark');
+});
+
+toggleSoundBtn.addEventListener('click', () => {
+  soundEnabled = !soundEnabled;
+  toggleSoundBtn.textContent = soundEnabled ? 'Toggle Sound' : 'Sound Off';
+});
+
 </script>
 
 </body>
