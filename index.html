@@ -2,191 +2,149 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>AI Partner Chat (Polished MVP)</title>
+<title>AI Partner Chat</title>
 <style>
-  body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 10px; background: #f7f7f7; transition: background 0.3s; }
-  body.dark { background: #1e1e1e; color: #ddd; }
-  h2 { text-align: center; color: #333; }
-  body.dark h2 { color: #eee; }
-  #chat { border:1px solid #ccc; border-radius:10px; min-height:350px; padding:15px; background:#fff; overflow-y:auto; box-shadow:0 2px 5px rgba(0,0,0,0.1); margin-bottom:10px; transition: background 0.3s, color 0.3s; }
-  body.dark #chat { background: #2b2b2b; color:#ddd; }
-  .message { display:flex; align-items:flex-end; margin:8px 0; padding:10px 15px; border-radius:20px; max-width:80%; word-wrap:break-word; opacity:0; transform:translateY(20px); transition: all 0.3s ease; position:relative; box-shadow:0 1px 3px rgba(0,0,0,0.15); }
-  .message.show { opacity:1; transform:translateY(0); }
-  .message:hover { box-shadow:0 2px 6px rgba(0,0,0,0.25); }
-  .user { background:linear-gradient(145deg,#a0d4ff,#d0e7ff); color:#003366; margin-left:auto; text-align:right; justify-content:flex-end; }
-  body.dark .user { background:linear-gradient(145deg,#004466,#005599); color:#aaddff; }
-  .partner { background:linear-gradient(145deg,#bafcc8,#e0ffe0); color:#006600; margin-right:auto; text-align:left; justify-content:flex-start; }
-  body.dark .partner { background:linear-gradient(145deg,#007700,#00aa00); color:#b8ffb8; }
-  .avatar { width:28px; height:28px; border-radius:50%; margin:0 8px; }
-  .timestamp { font-size:10px; color:#666; margin-left:auto; text-align:right; }
-  body.dark .timestamp { color:#aaa; }
-  #typingIndicator { font-style:italic; color:#555; margin-bottom:5px; display:none; }
-  body.dark #typingIndicator { color:#ccc; }
-  textarea { width:100%; height:60px; border-radius:10px; padding:10px; border:1px solid #ccc; resize:none; font-size:14px; transition:background 0.3s, color 0.3s, border 0.3s; }
-  body.dark textarea { background:#333; color:#ddd; border:1px solid #555; }
-  button { width:100%; padding:12px; margin-top:5px; border-radius:10px; border:none; background:#333; color:white; font-weight:bold; cursor:pointer; transition: background 0.3s; }
-  button:hover { background:#555; }
-  body.dark button { background:#555; color:#fff; }
-  body.dark button:hover { background:#777; }
-  .copy-btn { margin-left:8px; background:#888; font-size:10px; padding:2px 5px; border-radius:5px; cursor:pointer; }
-  .copy-btn:hover { background:#555; }
-  .fade-old { opacity:0.6; }
-  .dot { display:inline-block; width:6px; height:6px; margin:0 2px; background-color:#555; border-radius:50%; animation:bounce 1s infinite; }
-  .dot:nth-child(2) { animation-delay:0.2s; }
-  .dot:nth-child(3) { animation-delay:0.4s; }
-  body.dark .dot { background-color:#ccc; }
-  @keyframes bounce { 0%,80%,100% { transform:translateY(0); } 40% { transform:translateY(-6px); } }
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 10px;
+    transition: background 0.3s, color 0.3s;
+  }
+  body.light { background: #f5f5f5; color: #222; }
+  body.dark { background: #222; color: #f5f5f5; }
+
+  #chat { border: 1px solid #ccc; height: 300px; overflow-y: auto; padding: 10px; margin-bottom: 10px; border-radius: 10px; }
+  .user { color: blue; margin: 5px 0; }
+  .partner { color: green; margin: 5px 0; }
+  .typing { font-style: italic; color: gray; }
+  .message { margin: 5px 0; padding: 5px 10px; border-radius: 8px; display: inline-block; max-width: 80%; }
+  .user .message { background: #d0e7ff; }
+  .partner .message { background: #d0ffd6; }
+
+  textarea { width: 100%; height: 60px; border-radius: 5px; }
+  button { width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; }
+
+  .controls { display: flex; justify-content: space-between; margin-bottom: 10px; }
 </style>
 </head>
-<body>
+<body class="light">
 
 <h2>AI Partner Chat</h2>
 
+<div class="controls">
+  <button id="toggleTheme">Toggle Light/Dark</button>
+  <label><input type="checkbox" id="soundToggle" checked> Sound</label>
+</div>
+
 <div id="chat"></div>
-<div id="typingIndicator">Your partner is typing <span id="dotsContainer"></span></div>
 
 <textarea id="messageInput" placeholder="Type your message..."></textarea>
 <button onclick="sendMessage()">Send</button>
-<button onclick="clearMemory()">Reset Chat</button>
-<label><input type="checkbox" id="soundToggle"> Sound Effects</label>
-<label><input type="checkbox" id="themeToggle"> Dark Mode</label>
 
-<audio id="typeSound" src="https://www.soundjay.com/button/sounds/button-16.mp3" preload="auto"></audio>
+<audio id="typeSound" src="type-sound.mp3" preload="auto"></audio>
 
 <script>
-const MAX_MEMORY_LINES=10;
-let userId=localStorage.getItem("ai_chat_user_id");
-if(!userId){ userId="user_"+Math.random().toString(36).substr(2,9); localStorage.setItem("ai_chat_user_id",userId);}
-const MEMORY_KEY="ai_chat_memory_"+userId;
-let memory=localStorage.getItem(MEMORY_KEY)||"";
-const chatDiv=document.getElementById("chat");
+const chatDiv = document.getElementById("chat");
+const soundToggle = document.getElementById("soundToggle");
+const typeSound = document.getElementById("typeSound");
 
-// Load memory
-if(memory){
-  memory.split("\n").forEach(line=>{
-    if(line.startsWith("User:")) addMessage(line,"user",true);
-    else if(line.startsWith("Partner:")) addMessage(line,"partner",true);
-  });
-}
+// Assign random user ID
+const userId = "user_" + Math.floor(Math.random() * 1000000);
 
-// Add message to chat
-function addMessage(text,sender,instant=false){
-  const div=document.createElement("div");
-  div.className="message "+sender;
-  div.textContent=text;
+// Load memory from localStorage
+let memory = localStorage.getItem(userId) || "";
+function saveMemory() { localStorage.setItem(userId, memory); }
+function summarizeMemory(mem) { return mem.slice(-1000); } // last 1000 chars
 
-  const avatar=document.createElement("img");
-  avatar.className="avatar";
-  avatar.src=sender==="user" ? "https://i.imgur.com/0k5LPoJ.png" : "https://i.imgur.com/8Km9tLL.png";
-  if(sender==="partner") div.prepend(avatar);
-  if(sender==="user") div.append(avatar);
-
-  const timestamp=document.createElement("div");
-  timestamp.className="timestamp";
-  const now=new Date();
-  timestamp.textContent=now.getHours().toString().padStart(2,'0')+":"+now.getMinutes().toString().padStart(2,'0');
-  div.appendChild(timestamp);
-
-  chatDiv.querySelectorAll(".message").forEach(m=>m.classList.add("fade-old"));
+function addMessage(text, sender) {
+  const div = document.createElement("div");
+  div.className = sender;
+  const msgSpan = document.createElement("span");
+  msgSpan.textContent = text;
+  div.appendChild(msgSpan);
   chatDiv.appendChild(div);
-  chatDiv.scrollTop=chatDiv.scrollHeight;
-  if(!instant) setTimeout(()=>div.classList.add("show"),10); else div.classList.add("show");
+  chatDiv.scrollTop = chatDiv.scrollHeight;
 }
 
-// Summarize memory
-function summarizeMemory(mem){ 
-  const lines=mem.split("\n").filter(l=>l.trim()!=="");
-  return lines.slice(-MAX_MEMORY_LINES*2).join("\n"); 
+function showTypingIndicator() {
+  const div = document.createElement("div");
+  div.id = "typingIndicator";
+  div.className = "typing";
+  div.textContent = "Your partner is typing...";
+  chatDiv.appendChild(div);
+  chatDiv.scrollTop = chatDiv.scrollHeight;
 }
-function saveMemory(){ localStorage.setItem(MEMORY_KEY,memory); }
-function clearMemory(){ memory=""; localStorage.removeItem(MEMORY_KEY); chatDiv.innerHTML=""; }
 
-// Typing indicator
-function showTypingIndicator(){
-  const ind=document.getElementById("typingIndicator");
-  const dotsCont=document.getElementById("dotsContainer");
-  ind.style.display="block";
-  dotsCont.innerHTML="";
-  for(let i=0;i<3;i++){ const dot=document.createElement("span"); dot.className="dot"; dotsCont.appendChild(dot);}
+function hideTypingIndicator() {
+  const indicator = document.getElementById("typingIndicator");
+  if (indicator) indicator.remove();
 }
-function hideTypingIndicator(){ document.getElementById("typingIndicator").style.display="none"; }
 
-const soundToggle=document.getElementById("soundToggle");
-const typeSound=document.getElementById("typeSound");
-function playSound(){ if(soundToggle.checked) typeSound.play(); }
+async function sendMessage() {
+  const input = document.getElementById("messageInput");
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = "";
 
-const themeToggle=document.getElementById("themeToggle");
-themeToggle.addEventListener("change",()=>document.body.classList.toggle("dark"));
-
-// Enter key send
-document.getElementById("messageInput").addEventListener("keydown",e=>{
-  if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); sendMessage(); }
-});
-
-// Main send function with debugging
-async function sendMessage(){
-  const input=document.getElementById("messageInput");
-  const msg=input.value.trim();
-  if(!msg) return;
-  input.value="";
-  addMessage("You: "+msg,"user");
-  memory+=`User: ${msg}\n`;
+  addMessage("You: " + msg, "user");
+  memory += `User: ${msg}\n`;
   saveMemory();
   showTypingIndicator();
 
-  try{
-    const response=await fetch("https://hooks.zapier.com/hooks/catch/25106599/uqb4hsa/",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({user_id:userId,message:msg,memory:summarizeMemory(memory),timestamp:new Date().toISOString()})
+  try {
+    const response = await fetch("YOUR_APPSCRIPT_URL", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: userId,
+        message: msg,
+        memory: summarizeMemory(memory),
+        timestamp: new Date().toISOString()
+      })
     });
 
-    console.log("Raw response object:",response);
-    if(!response.ok) throw new Error("Network response not OK: "+response.status);
+    if (!response.ok) throw new Error("Network response not OK: " + response.status);
 
-    let data;
-    try{ data=await response.json(); }catch(j){ console.error("JSON parse error",j); throw new Error("JSON parse error"); }
-    console.log("Data returned:",data);
+    const data = await response.json();
     hideTypingIndicator();
-    if(!data.ai_reply) throw new Error("No ai_reply returned from Zapier");
 
-    const partnerText=data.ai_reply;
-    memory+=`Partner: ${partnerText}\n`;
+    if (!data.ai_reply) throw new Error("No ai_reply returned from server");
+
+    const partnerText = data.ai_reply;
+    memory += `Partner: ${partnerText}\n`;
     saveMemory();
 
-    let index=0;
-    const partnerDiv=document.createElement("div");
-    partnerDiv.className="message partner";
-    const avatar=document.createElement("img"); avatar.className="avatar"; avatar.src="https://i.imgur.com/8Km9tLL.png";
-    partnerDiv.prepend(avatar);
+    // Animate partner typing letter by letter
+    let index = 0;
+    const partnerDiv = document.createElement("div");
+    partnerDiv.className = "partner message";
     chatDiv.appendChild(partnerDiv);
-    chatDiv.scrollTop=chatDiv.scrollHeight;
 
-    function typeLetter(){
-      if(index<partnerText.length){
-        partnerDiv.textContent=partnerText.slice(0,index+1);
-        partnerDiv.prepend(avatar);
-        chatDiv.scrollTop=chatDiv.scrollHeight;
-        playSound();
+    function typeLetter() {
+      if (index < partnerText.length) {
+        partnerDiv.textContent = partnerText.slice(0, index + 1);
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+        if (soundToggle.checked) typeSound.play();
         index++;
-        setTimeout(typeLetter,50);
-      }else{
-        const timestamp=document.createElement("div");
-        timestamp.className="timestamp";
-        const now=new Date();
-        timestamp.textContent=now.getHours().toString().padStart(2,'0')+":"+now.getMinutes().toString().padStart(2,'0');
-        partnerDiv.appendChild(timestamp);
-        partnerDiv.classList.add("show");
+        setTimeout(typeLetter, 50);
       }
     }
     typeLetter();
 
-  }catch(e){
+  } catch (e) {
     hideTypingIndicator();
-    addMessage("⚠️ Error contacting Partner: "+e.message,"partner");
-    console.error("sendMessage error:",e);
+    addMessage("⚠️ Error contacting Partner: " + e.message, "partner");
+    console.error("sendMessage error:", e);
   }
 }
+
+// Light/Dark toggle
+document.getElementById("toggleTheme").onclick = () => {
+  document.body.classList.toggle("light");
+  document.body.classList.toggle("dark");
+};
 </script>
+
 </body>
 </html>
