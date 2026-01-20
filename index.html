@@ -2,45 +2,45 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>AI Partner Chat</title>
+<title>AI Partner Chat 3D</title>
 <style>
-/* ----- Global ----- */
-body {
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  background: linear-gradient(135deg, #ffd1dc, #ffe4e1);
+html, body {
+  height: 100%;
   margin: 0;
-  padding: 0;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+body {
   display: flex;
   justify-content: center;
-  height: 100vh;
+  background: linear-gradient(135deg, #ffd1dc, #ffe4e1);
   color: #333;
 }
 
 .container {
-  width: 420px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  height: 95%;
-  margin-top: 20px;
+  width: 100%;
+  max-width: 450px;
+  height: 100vh; /* full screen */
+  position: relative;
 }
 
-/* ----- Chat Window ----- */
 #chat {
   flex: 1;
   overflow-y: auto;
-  background: #fff;
-  border-radius: 20px;
-  padding: 15px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-  margin-bottom: 10px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
+  background: #fff;
+  border-radius: 25px 25px 0 0;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
 }
 
 .message {
   display: flex;
-  margin: 8px 0;
+  margin: 10px 0;
   align-items: flex-end;
   animation: fadeIn 0.3s ease;
 }
@@ -50,43 +50,42 @@ body {
 
 .bubble {
   max-width: 70%;
-  padding: 12px 18px;
+  padding: 14px 20px;
   border-radius: 25px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  position: relative;
-  word-wrap: break-word;
   font-size: 14px;
   line-height: 1.4;
-  animation: bubbleAppear 0.3s ease;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+  transform-style: preserve-3d;
+  perspective: 500px;
+  transition: transform 0.2s ease;
 }
 
 .message.user .bubble {
-  background: #ff6b81;
-  color: #fff;
+  background: linear-gradient(145deg,#ff6b81,#ff3b61);
   border-bottom-right-radius: 0;
+  color: #fff;
 }
 
 .message.partner .bubble {
-  background: #f0f0f0;
+  background: linear-gradient(145deg,#ffe4e1,#ffc0cb);
   color: #333;
   border-bottom-left-radius: 0;
 }
 
-/* ----- Profile Pictures ----- */
 .message img {
-  width: 35px;
-  height: 35px;
+  width: 50px; height: 50px;
   border-radius: 50%;
-  margin: 0 8px;
+  margin: 0 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  transform: translateZ(10px);
 }
 
 .message.user img { order: 2; margin-left: 5px; margin-right: 0; }
 
-/* ----- Typing Indicator ----- */
 #typing {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
   font-style: italic;
   color: #555;
 }
@@ -95,21 +94,33 @@ body {
   display: inline-block;
   animation: blink 1s infinite;
   font-weight: bold;
-  font-size: 18px;
+  font-size: 20px;
   margin-left: 2px;
 }
 
 #dots span:nth-child(2) { animation-delay: 0.2s; }
 #dots span:nth-child(3) { animation-delay: 0.4s; }
 
-/* ----- Inputs ----- */
+/* Bottom input area */
+#inputArea {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  background: #fff;
+  border-top-left-radius: 25px;
+  border-top-right-radius: 25px;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}
+
 #msg {
   width: 100%;
   height: 60px;
-  border-radius: 12px;
-  padding: 10px;
-  font-size: 14px;
-  resize: none;
+  border-radius: 15px;
+  padding: 12px;
+  font-size: 15px;
   border: 1px solid #ccc;
 }
 
@@ -117,7 +128,7 @@ button {
   padding: 12px;
   width: 100%;
   border: none;
-  border-radius: 12px;
+  border-radius: 15px;
   margin-top: 5px;
   font-weight: bold;
   cursor: pointer;
@@ -140,27 +151,29 @@ button:active { transform: scale(0.98); }
   font-size: 13px;
 }
 
-/* ----- Animations ----- */
-@keyframes blink { 0%, 20%, 100% { opacity: 0; } 10% { opacity: 1; } }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(5px);} to { opacity:1; transform: translateY(0);} }
-@keyframes bubbleAppear { from { opacity: 0; transform: scale(0.8);} to { opacity:1; transform: scale(1);} }
+/* Animations */
+@keyframes blink { 0%,20%,100%{opacity:0;} 10%{opacity:1;} }
+@keyframes fadeIn { from{opacity:0; transform: translateY(5px);} to{opacity:1; transform: translateY(0);} }
+@keyframes pop { 0%{transform:scale(0.8);} 50%{transform:scale(1.05);} 100%{transform:scale(1);} }
 </style>
 </head>
 <body>
-
 <div class="container">
   <div id="chat"></div>
+  
   <div id="typing" style="display:none">
-    <img src="https://i.imgur.com/OzaXhR2.png" alt="Partner" style="width:30px; height:30px; border-radius:50%; margin-right:5px;">
+    <img src="https://i.imgur.com/OzaXhR2.png" alt="Partner">
     Partner is typing<span id="dots"><span>.</span><span>.</span><span>.</span></span>
   </div>
 
-  <textarea id="msg" placeholder="Say something…"></textarea>
-  <button onclick="send()">Send</button>
-  <div id="controls">
-    <span class="toggle" onclick="toggleDark()">Toggle Dark Mode</span>
-    <span class="toggle" onclick="playSound()">Toggle Send Sound</span>
-    <span class="toggle" onclick="clearChat()">Clear Chat</span>
+  <div id="inputArea">
+    <textarea id="msg" placeholder="Say something…"></textarea>
+    <button onclick="send()">Send</button>
+    <div id="controls">
+      <span class="toggle" onclick="toggleDark()">Toggle Dark Mode</span>
+      <span class="toggle" onclick="playSound()">Toggle Send Sound</span>
+      <span class="toggle" onclick="clearChat()">Clear Chat</span>
+    </div>
   </div>
 </div>
 
@@ -175,8 +188,12 @@ function addMessage(text, sender) {
   const chat = document.getElementById("chat");
   const div = document.createElement("div");
   div.className = "message " + sender;
-  div.innerHTML = `<img src="${sender==='user' ? 'https://i.imgur.com/6XkIXlL.png' : 'https://i.imgur.com/OzaXhR2.png'}" alt="${sender}"><div class="bubble">${text}</div>`;
+  div.innerHTML = `
+    <img src="${sender==='user' ? 'https://i.imgur.com/6XkIXlL.png' : 'https://i.imgur.com/OzaXhR2.png'}" alt="${sender}">
+    <div class="bubble">${text}</div>
+  `;
   chat.appendChild(div);
+  div.querySelector('.bubble').style.animation = 'pop 0.3s ease';
   chat.scrollTop = chat.scrollHeight;
 }
 
@@ -192,9 +209,9 @@ async function send() {
   addMessage(message, "user");
   input.value = "";
 
-  if(soundEnabled) playSound();
-
+  if(soundEnabled) document.getElementById("sendSound").play();
   showTyping(true);
+
   try {
     const res = await fetch(WORKER_URL, {
       method: "POST",
@@ -226,6 +243,5 @@ function clearChat() {
   document.getElementById("chat").innerHTML = "";
 }
 </script>
-
 </body>
 </html>
