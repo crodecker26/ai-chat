@@ -43,15 +43,19 @@ body {
 }
 
 .header img {
-  width: 42px;
-  height: 42px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   margin-right: 10px;
+  transition: transform 0.3s ease;
 }
 
 .header .name {
   flex: 1;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .new-partner {
@@ -63,7 +67,9 @@ body {
   font-weight: 800;
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(0,0,0,.2);
+  transition: transform 0.15s ease;
 }
+.new-partner:hover { transform: scale(1.05); }
 
 /* CHAT */
 .chat {
@@ -71,29 +77,47 @@ body {
   padding: 12px;
   overflow-y: auto;
   background: var(--bg-gradient);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .bubble {
   max-width: 75%;
   padding: 10px 14px;
   border-radius: 18px;
-  margin-bottom: 10px;
   line-height: 1.3;
   word-wrap: break-word;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  animation: slideIn 0.3s ease;
+  position: relative;
 }
 
 .user {
-  background: #007aff;
+  background: linear-gradient(145deg, #4facfe, #00f2fe);
   color: white;
   margin-left: auto;
   border-bottom-right-radius: 4px;
 }
 
 .partner {
-  background: white;
+  background: linear-gradient(145deg, #ffe4e1, #ffc0cb);
   color: black;
   border-bottom-left-radius: 4px;
 }
+
+/* Reaction heart */
+.reaction {
+  position: absolute;
+  right: -18px;
+  bottom: -12px;
+  font-size: 16px;
+  cursor: pointer;
+  display: none;
+}
+.bubble:hover .reaction { display: block; }
 
 /* Typing indicator bubble */
 .typing {
@@ -112,11 +136,8 @@ body {
 .typing span:nth-child(2) { animation-delay: .2s; }
 .typing span:nth-child(3) { animation-delay: .4s; }
 
-@keyframes blink {
-  0% { opacity: .2 }
-  20% { opacity: 1 }
-  100% { opacity: .2 }
-}
+@keyframes blink { 0% { opacity:.2 } 20% { opacity:1 } 100% { opacity:.2 } }
+@keyframes slideIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
 
 /* INPUT */
 .input-area {
@@ -202,22 +223,43 @@ const personalities = [
   "calm and thoughtful"
 ];
 
+let usedNames = [];
 let partnerName = "";
 let personality = "";
 
 const chat = document.getElementById("chat");
 const msg = document.getElementById("msg");
 
+// RANDOM PARTNER GENERATION
 function randomPartner() {
-  partnerName = names[Math.floor(Math.random() * names.length)];
+  if (usedNames.length >= names.length) usedNames = [];
+  const available = names.filter(n => !usedNames.includes(n));
+  partnerName = available[Math.floor(Math.random() * available.length)];
+  usedNames.push(partnerName);
+
   personality = personalities[Math.floor(Math.random() * personalities.length)];
-  document.getElementById("partnerName").textContent = partnerName;
+  document.getElementById("partnerName").textContent = partnerName + " " + getMoodEmoji(personality);
+
+  // Partner: realistic female avatar
   document.getElementById("avatar").src =
-    `https://api.dicebear.com/7.x/notionists/svg?seed=${partnerName}&gender=female`;
+    `https://api.dicebear.com/7.x/micah/svg?seed=${partnerName}&gender=female`;
+
+  // User: colorful male avatar
+  window.userAvatar = `https://api.dicebear.com/7.x/micah/svg?seed=UserAvatar&gender=male`;
 }
 
-randomPartner();
+// EMOJI FOR PERSONALITY
+function getMoodEmoji(personality) {
+  switch(personality) {
+    case "warm and friendly": return "😊";
+    case "playful and teasing": return "😉";
+    case "confident and flirty": return "😏";
+    case "calm and thoughtful": return "😇";
+    default: return "🙂";
+  }
+}
 
+// COLOR ORBS
 function setColor(color) {
   document.documentElement.style.setProperty("--accent", color);
   document.documentElement.style.setProperty(
@@ -226,15 +268,27 @@ function setColor(color) {
   );
 }
 
+// ADD BUBBLE
 function addBubble(text, cls) {
   const div = document.createElement("div");
   div.className = `bubble ${cls}`;
-  div.innerHTML = text;
+  div.innerHTML = cls === "user"
+    ? `<img src="${window.userAvatar}" style="width:28px;height:28px;border-radius:50%;margin-right:6px;vertical-align:middle;">${text}`
+    : text;
+
+  // reaction emoji
+  const reaction = document.createElement("span");
+  reaction.className = "reaction";
+  reaction.textContent = "❤️";
+  reaction.onclick = () => reaction.style.color = "red";
+  div.appendChild(reaction);
+
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
   return div;
 }
 
+// TYPING INDICATOR
 function showTyping(text = null) {
   return addBubble(
     text || `<div class="typing"><span></span><span></span><span></span></div>`,
@@ -242,6 +296,7 @@ function showTyping(text = null) {
   );
 }
 
+// SEND MESSAGE
 async function send() {
   const input = msg.value.trim();
   if (!input) return;
@@ -275,6 +330,7 @@ async function send() {
   }
 }
 
+// ENTER KEY
 msg.addEventListener("keydown", e => {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
@@ -282,6 +338,7 @@ msg.addEventListener("keydown", e => {
   }
 });
 
+// NEW PARTNER
 function newPartner() {
   chat.innerHTML = "";
   const finding = showTyping("Finding partner…");
@@ -293,6 +350,9 @@ function newPartner() {
     addBubble(`Hey — I’m ${partnerName}.`, "partner");
   }, delay);
 }
+
+// INITIALIZE
+randomPartner();
 </script>
 </body>
 </html>
