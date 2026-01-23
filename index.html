@@ -47,7 +47,6 @@ body {
   height: 48px;
   border-radius: 50%;
   margin-right: 10px;
-  transition: transform 0.3s ease;
 }
 
 .header .name {
@@ -67,9 +66,7 @@ body {
   font-weight: 800;
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(0,0,0,.2);
-  transition: transform 0.15s ease;
 }
-.new-partner:hover { transform: scale(1.05); }
 
 /* CHAT */
 .chat {
@@ -87,64 +84,27 @@ body {
   padding: 10px 14px;
   border-radius: 18px;
   line-height: 1.3;
-  word-wrap: break-word;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  animation: slideIn 0.3s ease;
-  position: relative;
 }
 
 .user {
   background: linear-gradient(145deg, #4facfe, #00f2fe);
   color: white;
   margin-left: auto;
-  border-bottom-right-radius: 4px;
 }
 
 .partner {
   background: linear-gradient(145deg, #ffe4e1, #ffc0cb);
   color: black;
-  border-bottom-left-radius: 4px;
 }
-
-/* Reaction heart */
-.reaction {
-  position: absolute;
-  right: -18px;
-  bottom: -12px;
-  font-size: 16px;
-  cursor: pointer;
-  display: none;
-}
-.bubble:hover .reaction { display: block; }
-
-/* Typing indicator bubble */
-.typing {
-  display: inline-flex;
-  gap: 4px;
-}
-
-.typing span {
-  width: 6px;
-  height: 6px;
-  background: #999;
-  border-radius: 50%;
-  animation: blink 1.4s infinite both;
-}
-
-.typing span:nth-child(2) { animation-delay: .2s; }
-.typing span:nth-child(3) { animation-delay: .4s; }
-
-@keyframes blink { 0% { opacity:.2 } 20% { opacity:1 } 100% { opacity:.2 } }
-@keyframes slideIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
 
 /* INPUT */
 .input-area {
   display: flex;
   padding: 10px;
   background: #fff;
-  border-top: 1px solid #ddd;
 }
 
 textarea {
@@ -153,8 +113,6 @@ textarea {
   border-radius: 18px;
   padding: 10px 14px;
   border: 1px solid #ccc;
-  font-size: 16px;
-  max-height: 120px;
 }
 
 .send {
@@ -165,8 +123,6 @@ textarea {
   border-radius: 50%;
   width: 42px;
   height: 42px;
-  font-size: 18px;
-  cursor: pointer;
 }
 
 /* COLOR ORBS */
@@ -183,8 +139,6 @@ textarea {
   height: 26px;
   border-radius: 50%;
   cursor: pointer;
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 1px rgba(0,0,0,.1);
 }
 </style>
 </head>
@@ -207,7 +161,7 @@ textarea {
   </div>
 
   <div class="input-area">
-    <textarea id="msg" rows="1" placeholder="Message..."></textarea>
+    <textarea id="msg" placeholder="Message..."></textarea>
     <button class="send" onclick="send()">➤</button>
   </div>
 </div>
@@ -226,11 +180,12 @@ const personalities = [
 let usedNames = [];
 let partnerName = "";
 let personality = "";
+let conversation = [];
+const MAX_MEMORY = 8;
 
 const chat = document.getElementById("chat");
 const msg = document.getElementById("msg");
 
-// RANDOM PARTNER GENERATION
 function randomPartner() {
   if (usedNames.length >= names.length) usedNames = [];
   const available = names.filter(n => !usedNames.includes(n));
@@ -238,28 +193,16 @@ function randomPartner() {
   usedNames.push(partnerName);
 
   personality = personalities[Math.floor(Math.random() * personalities.length)];
-  document.getElementById("partnerName").textContent = partnerName + " " + getMoodEmoji(personality);
+  document.getElementById("partnerName").textContent = partnerName;
 
-  // Partner: realistic female avatar
+  // ✅ ALWAYS PRETTY GIRL
   document.getElementById("avatar").src =
-    `https://api.dicebear.com/7.x/micah/svg?seed=${partnerName}&gender=female`;
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${partnerName}&facialHairChance=0&topChance=100`;
 
-  // User: colorful male avatar
-  window.userAvatar = `https://api.dicebear.com/7.x/micah/svg?seed=UserAvatar&gender=male`;
+  window.userAvatar =
+    `https://api.dicebear.com/7.x/micah/svg?seed=UserAvatar`;
 }
 
-// EMOJI FOR PERSONALITY
-function getMoodEmoji(personality) {
-  switch(personality) {
-    case "warm and friendly": return "😊";
-    case "playful and teasing": return "😉";
-    case "confident and flirty": return "😏";
-    case "calm and thoughtful": return "😇";
-    default: return "🙂";
-  }
-}
-
-// COLOR ORBS
 function setColor(color) {
   document.documentElement.style.setProperty("--accent", color);
   document.documentElement.style.setProperty(
@@ -268,90 +211,50 @@ function setColor(color) {
   );
 }
 
-// ADD BUBBLE
 function addBubble(text, cls) {
   const div = document.createElement("div");
   div.className = `bubble ${cls}`;
-  div.innerHTML = cls === "user"
-    ? `<img src="${window.userAvatar}" style="width:28px;height:28px;border-radius:50%;margin-right:6px;vertical-align:middle;">${text}`
-    : text;
-
-  // reaction emoji
-  const reaction = document.createElement("span");
-  reaction.className = "reaction";
-  reaction.textContent = "❤️";
-  reaction.onclick = () => reaction.style.color = "red";
-  div.appendChild(reaction);
-
+  div.innerHTML = text;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
-  return div;
 }
 
-// TYPING INDICATOR
-function showTyping(text = null) {
-  return addBubble(
-    text || `<div class="typing"><span></span><span></span><span></span></div>`,
-    "partner"
-  );
-}
-
-// SEND MESSAGE
 async function send() {
   const input = msg.value.trim();
   if (!input) return;
   msg.value = "";
 
   addBubble(input, "user");
-  const typingBubble = showTyping();
+  conversation.push({ role: "user", content: input });
+  conversation = conversation.slice(-MAX_MEMORY);
 
   try {
     const res = await fetch(WORKER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        message: input,
         partner: partnerName,
-        tone: personality
+        tone: personality,
+        history: conversation
       })
     });
 
     const data = await res.json();
-    const delay = Math.random() * 5000 + 2000;
+    addBubble(data.ai_reply || "…", "partner");
+    conversation.push({ role: "assistant", content: data.ai_reply });
 
-    setTimeout(() => {
-      typingBubble.remove();
-      addBubble(data.ai_reply || "…", "partner");
-    }, delay);
-
-  } catch (e) {
-    typingBubble.remove();
-    addBubble("Sorry, something went wrong.", "partner");
+  } catch {
+    addBubble("Something went wrong.", "partner");
   }
 }
 
-// ENTER KEY
-msg.addEventListener("keydown", e => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    send();
-  }
-});
-
-// NEW PARTNER
 function newPartner() {
   chat.innerHTML = "";
-  const finding = showTyping("Finding partner…");
-
-  const delay = Math.random() * 5000 + 2000;
-  setTimeout(() => {
-    finding.remove();
-    randomPartner();
-    addBubble(`Hey — I’m ${partnerName}.`, "partner");
-  }, delay);
+  conversation = [];
+  randomPartner();
+  addBubble(`Hey — I’m ${partnerName}.`, "partner");
 }
 
-// INITIALIZE
 randomPartner();
 </script>
 </body>
