@@ -1,203 +1,319 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Chat</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI Partner Chat</title>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #0f0f0f;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
+<style>
+:root {
+  --accent: #ff5fa2;
+  --bg-gradient: linear-gradient(135deg, #ffffff, var(--accent));
+}
 
-    #status {
-      text-align: center;
-      padding: 12px;
-      font-size: 14px;
-      color: #aaa;
-    }
+* {
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
 
-    #chat {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+body {
+  margin: 0;
+  height: 100vh;
+  background: var(--bg-gradient);
+  display: flex;
+  justify-content: center;
+}
 
-    .msg {
-      max-width: 70%;
-      padding: 10px 14px;
-      border-radius: 18px;
-      font-size: 15px;
-      line-height: 1.3;
-    }
+.app {
+  width: 100%;
+  max-width: 420px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f2f2f7;
+}
 
-    .user {
-      align-self: flex-end;
-      background: #1e90ff;
-    }
+/* HEADER */
+.header {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+}
 
-    .ai {
-      align-self: flex-start;
-      background: #2a2a2a;
-    }
+.header img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
 
-    #typing {
-      display: none;
-      align-self: flex-start;
-      background: #2a2a2a;
-      padding: 10px 14px;
-      border-radius: 18px;
-      width: fit-content;
-    }
+.header .name {
+  flex: 1;
+  font-weight: 600;
+}
 
-    .dots {
-      display: flex;
-      gap: 4px;
-    }
+.new-partner {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-weight: 800;
+  cursor: pointer;
+}
 
-    .dot {
-      width: 6px;
-      height: 6px;
-      background: #bbb;
-      border-radius: 50%;
-      animation: bounce 1.4s infinite both;
-    }
+/* CHAT */
+.chat {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  background: var(--bg-gradient);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
-    .dot:nth-child(2) { animation-delay: .2s; }
-    .dot:nth-child(3) { animation-delay: .4s; }
+.bubble {
+  max-width: 75%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  line-height: 1.3;
+  display: inline-flex;
+  align-items: center;
+}
 
-    @keyframes bounce {
-      0%, 80%, 100% { transform: scale(0); }
-      40% { transform: scale(1); }
-    }
+.user {
+  background: linear-gradient(145deg, #4facfe, #00f2fe);
+  color: white;
+  margin-left: auto;
+}
 
-    #inputBar {
-      display: flex;
-      padding: 12px;
-      border-top: 1px solid #222;
-      gap: 10px;
-    }
+.partner {
+  background: linear-gradient(145deg, #ffe4e1, #ffc0cb);
+  color: black;
+}
 
-    textarea {
-      flex: 1;
-      resize: none;
-      border-radius: 16px;
-      border: none;
-      padding: 10px 14px;
-      font-size: 15px;
-      outline: none;
-    }
+/* TYPING DOTS */
+.typing {
+  display: inline-flex;
+  gap: 4px;
+}
 
-    button {
-      padding: 0 18px;
-      border-radius: 16px;
-      border: none;
-      background: #1e90ff;
-      color: white;
-      font-size: 15px;
-      cursor: pointer;
-    }
-  </style>
+.typing span {
+  width: 6px;
+  height: 6px;
+  background: #777;
+  border-radius: 50%;
+  animation: blink 1.4s infinite both;
+}
+
+.typing span:nth-child(2) { animation-delay: .2s; }
+.typing span:nth-child(3) { animation-delay: .4s; }
+
+@keyframes blink {
+  0% { opacity: .2; }
+  20% { opacity: 1; }
+  100% { opacity: .2; }
+}
+
+/* INPUT */
+.input-area {
+  display: flex;
+  padding: 10px;
+  background: #fff;
+}
+
+textarea {
+  flex: 1;
+  resize: none;
+  border-radius: 18px;
+  padding: 10px 14px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+.send {
+  margin-left: 8px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  cursor: pointer;
+}
+
+/* COLOR ORBS */
+.orbs {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px;
+  background: #fff;
+}
+
+.orb {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+</style>
 </head>
 
 <body>
-
-  <div id="status">Finding partner...</div>
-
-  <div id="chat"></div>
-
-  <div id="typing">
-    <div class="dots">
-      <div class="dot"></div>
-      <div class="dot"></div>
-      <div class="dot"></div>
-    </div>
+<div class="app">
+  <div class="header">
+    <img id="avatar" src="">
+    <div class="name" id="partnerName"></div>
+    <button class="new-partner" onclick="newPartner()">NEW PARTNER</button>
   </div>
 
-  <div id="inputBar">
-    <textarea id="input" rows="1" placeholder="Type a message..."></textarea>
-    <button onclick="sendMessage()">Send</button>
+  <div class="chat" id="chat"></div>
+
+  <div class="orbs">
+    <div class="orb" style="background:#ff5fa2" onclick="setColor('#ff5fa2')"></div>
+    <div class="orb" style="background:#6c5ce7" onclick="setColor('#6c5ce7')"></div>
+    <div class="orb" style="background:#00b894" onclick="setColor('#00b894')"></div>
+    <div class="orb" style="background:#fdcb6e" onclick="setColor('#fdcb6e')"></div>
   </div>
 
-  <script>
-    const chat = document.getElementById("chat");
-    const input = document.getElementById("input");
-    const status = document.getElementById("status");
-    const typing = document.getElementById("typing");
+  <div class="input-area">
+    <textarea id="msg" placeholder="Message..."></textarea>
+    <button class="send" onclick="send()">➤</button>
+  </div>
+</div>
 
-    let busy = true;
+<script>
+const WORKER_URL = "https://broken-poetry-bc28.calvin-rodecker.workers.dev/";
 
-    // Fake "finding partner" delay
-    setTimeout(() => {
-      status.textContent = "Connected";
-      busy = false;
-    }, 2500);
+const names = ["Luna","Ava","Mia","Scarlett","Chloe","Sofia","Isla","Nina"];
+const personalities = [
+  "warm and friendly",
+  "playful and teasing",
+  "confident and flirty",
+  "calm and thoughtful"
+];
 
-    function addMessage(text, cls) {
-      const div = document.createElement("div");
-      div.className = `msg ${cls}`;
-      div.textContent = text;
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
-    }
+let usedNames = [];
+let partnerName = "";
+let personality = "";
+let conversation = [];
+const MAX_MEMORY = 8;
 
-    function showTyping(show) {
-      typing.style.display = show ? "block" : "none";
-      if (show) chat.appendChild(typing);
-      chat.scrollTop = chat.scrollHeight;
-    }
+const chat = document.getElementById("chat");
+const msg = document.getElementById("msg");
 
-    async function sendMessage() {
-      if (busy) return;
+/* UTIL */
+function delay(min, max) {
+  return Math.random() * (max - min) + min;
+}
 
-      const text = input.value.trim();
-      if (!text) return;
+/* PARTNER */
+function randomPartner() {
+  if (usedNames.length >= names.length) usedNames = [];
+  const available = names.filter(n => !usedNames.includes(n));
+  partnerName = available[Math.floor(Math.random() * available.length)];
+  usedNames.push(partnerName);
 
-      addMessage(text, "user");
-      input.value = "";
+  personality = personalities[Math.floor(Math.random() * personalities.length)];
+  document.getElementById("partnerName").textContent = partnerName;
 
-      busy = true;
-      showTyping(true);
+  document.getElementById("avatar").src =
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${partnerName}&facialHairChance=0`;
 
-      // Human-like delay before AI responds
-      const delay = 1000 + Math.random() * 1500;
-      await new Promise(r => setTimeout(r, delay));
+  conversation = [];
+}
 
-      try {
-        const res = await fetch("YOUR_WORKER_URL_HERE", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: text })
-        });
+/* COLOR */
+function setColor(color) {
+  document.documentElement.style.setProperty("--accent", color);
+  document.documentElement.style.setProperty(
+    "--bg-gradient",
+    `linear-gradient(135deg, #ffffff, ${color})`
+  );
+}
 
-        const data = await res.json();
-        showTyping(false);
-        addMessage(data.ai_reply || "…", "ai");
+/* BUBBLES */
+function addBubble(text, cls) {
+  const div = document.createElement("div");
+  div.className = `bubble ${cls}`;
+  div.innerHTML = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
 
-      } catch {
-        showTyping(false);
-        addMessage("Connection error.", "ai");
-      }
+function showTyping() {
+  return addBubble(
+    `<div class="typing"><span></span><span></span><span></span></div>`,
+    "partner"
+  );
+}
 
-      busy = false;
-    }
+/* SEND */
+async function send() {
+  const input = msg.value.trim();
+  if (!input) return;
+  msg.value = "";
 
-    // ENTER to send, SHIFT+ENTER for newline
-    input.addEventListener("keydown", e => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
+  addBubble(input, "user");
+  conversation.push({ role: "user", content: input });
+  conversation = conversation.slice(-MAX_MEMORY);
+
+  const typing = showTyping();
+
+  try {
+    const res = await fetch(WORKER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: input,
+        history: conversation,
+        partner: partnerName,
+        tone: personality
+      })
     });
-  </script>
 
+    const data = await res.json();
+    const wait = delay(2000, 7000);
+
+    setTimeout(() => {
+      typing.remove();
+      addBubble(data.ai_reply || "…", "partner");
+      conversation.push({ role: "assistant", content: data.ai_reply });
+    }, wait);
+
+  } catch {
+    typing.remove();
+    addBubble("Connection error.", "partner");
+  }
+}
+
+/* ENTER TO SEND */
+msg.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    send();
+  }
+});
+
+/* NEW PARTNER */
+function newPartner() {
+  chat.innerHTML = "";
+  const finding = addBubble("Finding partner…", "partner");
+
+  setTimeout(() => {
+    finding.remove();
+    randomPartner();
+    addBubble(`Hey — I’m ${partnerName}.`, "partner");
+  }, delay(2000, 7000));
+}
+
+/* INIT */
+randomPartner();
+</script>
 </body>
 </html>
